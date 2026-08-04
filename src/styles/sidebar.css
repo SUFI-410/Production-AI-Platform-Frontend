@@ -1,0 +1,59 @@
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 20px;
+}
+
+.new-chat-button {
+  width: 100%;
+
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: var(--primary);
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.new-chat-button:hover {
+  opacity: 0.9;
+}
+
+.sidebar-menu {
+  margin-top: 30px;
+}
+
+.sidebar-section h3 {
+  margin-bottom: 12px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+
+  text-transform: uppercase;
+}
+
+.sidebar-section ul {
+  list-style: none;
+}
+
+.sidebar-section li {
+  padding: 10px 0;
+
+  color: var(--text-secondary);
+}
