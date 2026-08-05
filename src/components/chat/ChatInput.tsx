@@ -1,15 +1,21 @@
-import type {
-  KeyboardEvent,
-  SubmitEvent,
+import {
+  useCallback,
+  useState,
+  type KeyboardEvent,
+  type SubmitEvent,
 } from "react";
 
 import { Send } from "lucide-react";
 
 import { useChatStore } from "../../store/chatStore";
 import { Button } from "../ui/button";
+import { TurnstileWidget } from "./TurnstileWidget";
 
 interface ChatInputProps {
-  onSubmit?: (message: string) => void;
+  onSubmit?: (
+    message: string,
+    turnstileToken: string,
+  ) => Promise<void>;
 }
 
 export function ChatInput({
@@ -25,26 +31,74 @@ export function ChatInput({
     (state) => state.isSubmitting,
   );
 
+  const [turnstileToken, setTurnstileToken] =
+    useState<string | null>(null);
+
+  const [turnstileError, setTurnstileError] =
+    useState<string | null>(null);
+
+  const [turnstileResetKey, setTurnstileResetKey] =
+    useState(0);
+
+  const turnstileSiteKey =
+    import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() ??
+    "";
+
   const trimmedMessage = input.trim();
 
   const canSubmit =
     trimmedMessage.length > 0 &&
+    turnstileToken !== null &&
+    turnstileSiteKey.length > 0 &&
     !isSubmitting &&
     onSubmit !== undefined;
 
-  const submitMessage = () => {
-    if (!canSubmit || !onSubmit) {
+  const handleTurnstileTokenChange =
+    useCallback((token: string | null) => {
+      setTurnstileToken(token);
+
+      setTurnstileError(
+        token
+          ? null
+          : "Human verification expired. Please verify again.",
+      );
+    }, []);
+
+  const handleTurnstileError =
+    useCallback(() => {
+      setTurnstileError(
+        "Human verification could not be completed. Please try again.",
+      );
+    }, []);
+
+  const submitMessage = async () => {
+    if (
+      !canSubmit ||
+      !onSubmit ||
+      !turnstileToken
+    ) {
       return;
     }
 
-    onSubmit(trimmedMessage);
+    try {
+      await onSubmit(
+        trimmedMessage,
+        turnstileToken,
+      );
+    } finally {
+      setTurnstileToken(null);
+
+      setTurnstileResetKey(
+        (currentKey) => currentKey + 1,
+      );
+    }
   };
 
   const handleSubmit = (
     event: SubmitEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
-    submitMessage();
+    void submitMessage();
   };
 
   const handleKeyDown = (
@@ -60,7 +114,7 @@ export function ChatInput({
     }
 
     event.preventDefault();
-    submitMessage();
+    void submitMessage();
   };
 
   return (
@@ -68,6 +122,35 @@ export function ChatInput({
       className="border-t bg-background p-4"
       onSubmit={handleSubmit}
     >
+      <div className="mx-auto mb-3 flex max-w-4xl flex-col items-center gap-2">
+        {turnstileSiteKey ? (
+          <TurnstileWidget
+            onError={handleTurnstileError}
+            onTokenChange={
+              handleTurnstileTokenChange
+            }
+            resetKey={turnstileResetKey}
+            siteKey={turnstileSiteKey}
+          />
+        ) : (
+          <p
+            className="text-sm text-destructive"
+            role="alert"
+          >
+            Human verification is unavailable.
+          </p>
+        )}
+
+        {turnstileError && (
+          <p
+            className="text-xs text-destructive"
+            role="alert"
+          >
+            {turnstileError}
+          </p>
+        )}
+      </div>
+
       <div className="mx-auto flex max-w-4xl items-end gap-2">
         <textarea
           aria-label="Chat message"
@@ -114,7 +197,8 @@ export function ChatInput({
       </div>
 
       <p className="mx-auto mt-2 max-w-4xl text-center text-xs text-muted-foreground">
-        Press Enter to send. Use Shift+Enter for a new line.
+        Complete human verification, then press Enter
+        to send. Use Shift+Enter for a new line.
       </p>
     </form>
   );
