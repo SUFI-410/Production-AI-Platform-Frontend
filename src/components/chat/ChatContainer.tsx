@@ -69,7 +69,10 @@ function ChatContainer() {
   );
 
   const submitMessage = useCallback(
-    async (message: string): Promise<void> => {
+    async (
+      message: string,
+      turnstileToken: string,
+    ): Promise<void> => {
       const question = message.trim();
 
       if (
@@ -101,6 +104,7 @@ function ChatContainer() {
       try {
         const response = await mutateAsync({
           question,
+          turnstile_token: turnstileToken,
           session_id: conversationId,
           use_cache: true,
         });
@@ -146,8 +150,14 @@ function ChatContainer() {
   );
 
   const handleSubmit = useCallback(
-    (message: string): void => {
-      void submitMessage(message);
+    (
+      message: string,
+      turnstileToken: string,
+    ): Promise<void> => {
+      return submitMessage(
+        message,
+        turnstileToken,
+      );
     },
     [submitMessage],
   );

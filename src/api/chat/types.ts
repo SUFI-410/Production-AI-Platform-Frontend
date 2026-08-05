@@ -1,5 +1,6 @@
 export interface ChatRequest {
   question: string;
+  turnstile_token: string;
   session_id?: string | null;
   use_cache?: boolean;
 }
