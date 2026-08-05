@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback } from "react";
 
 import { useChat } from "../../hooks/useChat";
@@ -23,14 +24,72 @@ function createMessage(
 }
 
 function getErrorMessage(error: unknown): string {
-  if (
-    error instanceof Error &&
-    error.message.trim().length > 0
-  ) {
-    return error.message;
+  if (!axios.isAxiosError(error)) {
+    return "The assistant could not process your request. Please try again.";
   }
 
-  return "The assistant could not process your request.";
+  if (
+    error.code === "ECONNABORTED" ||
+    error.code === "ETIMEDOUT"
+  ) {
+    return (
+      "The request took too long. Please wait a moment, " +
+      "then try the same question again."
+    );
+  }
+
+  const statusCode = error.response?.status;
+
+  if (statusCode === undefined) {
+    return (
+      "Unable to reach the AI service. Check your internet " +
+      "connection and try again."
+    );
+  }
+
+  if (statusCode === 403) {
+    return (
+      "Human verification failed or expired. Complete the " +
+      "verification and try again."
+    );
+  }
+
+  if (statusCode === 429) {
+    return (
+      "Too many requests were sent. Please wait at least " +
+      "10 seconds before trying again."
+    );
+  }
+
+  if (statusCode === 422) {
+    return (
+      "The request could not be validated. Refresh the page " +
+      "and try again."
+    );
+  }
+
+  if (statusCode === 500) {
+    return (
+      "The AI service encountered an internal error. " +
+      "Please try again shortly."
+    );
+  }
+
+  if (
+    statusCode === 502 ||
+    statusCode === 503 ||
+    statusCode === 504
+  ) {
+    return (
+      "The AI service is temporarily unavailable. " +
+      "Please try again in a few moments."
+    );
+  }
+
+  return (
+    "The assistant could not process your request. " +
+    "Please try again."
+  );
 }
 
 function ChatContainer() {
@@ -116,8 +175,12 @@ function ChatContainer() {
           grounded: response.grounded,
         });
 
-        if (response.session_id !== null) {
-          setConversationId(response.session_id);
+        if (
+          typeof response.session_id === "string"
+        ) {
+          setConversationId(
+            response.session_id,
+          );
         }
       } catch (error: unknown) {
         const errorMessage =
@@ -126,8 +189,7 @@ function ChatContainer() {
         setError(errorMessage);
 
         updateMessage(assistantMessage.id, {
-          content:
-            "Sorry, I could not generate a response. Please try again.",
+          content: errorMessage,
           status: "error",
           sources: [],
           grounded: null,
