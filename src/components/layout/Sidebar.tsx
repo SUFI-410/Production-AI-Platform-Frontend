@@ -1,7 +1,23 @@
+import { useChatStore } from "../../store/chatStore";
+
 function Sidebar() {
+  const isSubmitting = useChatStore(
+    (state) => state.isSubmitting,
+  );
+
+  const resetChat = useChatStore(
+    (state) => state.resetChat,
+  );
+
   return (
     <aside className="sidebar">
-      <button className="new-chat-button">
+      <button
+        aria-label="Start a new conversation"
+        className="new-chat-button"
+        disabled={isSubmitting}
+        onClick={resetChat}
+        type="button"
+      >
         + New Chat
       </button>
 
