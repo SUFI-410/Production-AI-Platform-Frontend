@@ -326,7 +326,7 @@ textarea {
   border-right: 1px solid var(--border);
 }
 
-.sidebar button {
+.sidebar > .new-chat-button {
   width: 100%;
 }
 
