@@ -14,5 +14,5 @@ export interface ChatResponse {
   answer: string;
   sources: Source[];
   grounded: boolean;
-  session_id: string | null;
+  session_id: string;
 }
