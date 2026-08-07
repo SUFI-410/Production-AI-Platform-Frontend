@@ -48,12 +48,7 @@ function formatSourceScore(score: number): string {
     return "";
   }
 
-  const normalizedScore = Math.min(
-    Math.max(score, 0),
-    1,
-  );
-
-  return `${Math.round(normalizedScore * 100)}%`;
+  return score.toFixed(2);
 }
 
 interface MessageStatusProps {
@@ -197,9 +192,9 @@ function MessageSources({
               {score && (
                 <span
                   className="shrink-0 text-xs tabular-nums text-muted-foreground"
-                  title="Retrieval relevance score"
+                  title="Cross-encoder relevance score"
                 >
-                  {score}
+                  Relevance {score}
                 </span>
               )}
             </li>
