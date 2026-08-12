@@ -9,6 +9,7 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<ChatPage />} />
+          <Route path="chat" element={<ChatPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
