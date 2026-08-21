@@ -1,16 +1,42 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import AuthPage from "./pages/auth/AuthPage";
 import ChatPage from "./pages/chat/ChatPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<ChatPage />} />
-          <Route path="chat" element={<ChatPage />} />
+        <Route
+          element={<AuthPage />}
+          path="auth"
+        />
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route
+              element={<ChatPage />}
+              index
+            />
+
+            <Route
+              element={<ChatPage />}
+              path="chat"
+            />
+          </Route>
         </Route>
+
+        <Route
+          element={<Navigate replace to="/" />}
+          path="*"
+        />
       </Routes>
     </BrowserRouter>
   );
