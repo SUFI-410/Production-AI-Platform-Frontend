@@ -1,150 +1,67 @@
-import { Trash2 } from "lucide-react";
+﻿import {
+  FileCheck2,
+  MessageSquareText,
+  ShieldCheck,
+} from "lucide-react";
+import { NavLink } from "react-router-dom";
 
-import { useChatStore } from "../../store/chatStore";
-
-const dateFormatter = new Intl.DateTimeFormat(
-  undefined,
+const navigationItems = [
   {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    end: true,
+    icon: FileCheck2,
+    label: "Invoice Preflight",
+    to: "/",
   },
-);
+  {
+    end: false,
+    icon: MessageSquareText,
+    label: "Knowledge Chat",
+    to: "/chat",
+  },
+];
 
 function Sidebar() {
-  const isSubmitting = useChatStore(
-    (state) => state.isSubmitting,
-  );
-
-  const conversations = useChatStore(
-    (state) => state.conversations,
-  );
-
-  const activeConversationId = useChatStore(
-    (state) => state.activeConversationId,
-  );
-
-  const resetChat = useChatStore(
-    (state) => state.resetChat,
-  );
-
-  const openConversation = useChatStore(
-    (state) => state.openConversation,
-  );
-
-  const deleteConversation = useChatStore(
-    (state) => state.deleteConversation,
-  );
-
   return (
-    <aside className="sidebar">
-      <button
-        aria-label="Start a new conversation"
-        className="new-chat-button"
-        disabled={isSubmitting}
-        onClick={resetChat}
-        type="button"
-      >
-        + New Chat
-      </button>
-
+    <aside className="flex w-full shrink-0 flex-col border-b border-border bg-card/50 md:w-64 md:border-b-0 md:border-r">
       <nav
-        aria-label="Recent conversations"
-        className="sidebar-menu"
+        aria-label="Product navigation"
+        className="flex gap-2 p-3 md:flex-col md:p-4"
       >
-        <div className="sidebar-section">
-          <h3>Recent Chats</h3>
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
 
-          {conversations.length === 0 ? (
-            <p className="px-2 py-3 text-sm text-muted-foreground">
-              No conversations yet
-            </p>
-          ) : (
-            <ul className="space-y-1">
-              {conversations.map(
-                (conversation) => {
-                  const isActive =
-                    conversation.id ===
-                    activeConversationId;
-
-                  return (
-                    <li
-                      className={[
-                        "group flex items-center gap-1",
-                        "rounded-md",
-                        isActive
-                          ? "bg-muted"
-                          : "hover:bg-muted/60",
-                      ].join(" ")}
-                      key={conversation.id}
-                    >
-                      <button
-                        aria-pressed={isActive}
-                        className={[
-                          "min-w-0 flex-1 overflow-hidden",
-                          "px-2 py-2 text-left",
-                          "text-foreground",
-                        ].join(" ")}
-                        disabled={isSubmitting}
-                        onClick={() => {
-                          openConversation(
-                            conversation.id,
-                          );
-                        }}
-                        title={conversation.title}
-                        type="button"
-                      >
-                        <span className="block truncate text-sm font-medium text-foreground">
-                          {conversation.title ||
-                            "Untitled conversation"}
-                        </span>
-
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {dateFormatter.format(
-                            new Date(
-                              conversation.updatedAt,
-                            ),
-                          )}
-                        </span>
-                      </button>
-
-                      <button
-                        aria-label={
-                          `Delete conversation: ` +
-                          conversation.title
-                        }
-                        className={[
-                          "mr-1 size-auto shrink-0 rounded-md p-2",
-                          "text-muted-foreground",
-                          "hover:bg-background",
-                          "hover:text-destructive",
-                          "focus-visible:outline-none",
-                          "focus-visible:ring-2",
-                          "focus-visible:ring-ring",
-                        ].join(" ")}
-                        disabled={isSubmitting}
-                        onClick={() => {
-                          deleteConversation(
-                            conversation.id,
-                          );
-                        }}
-                        title="Delete conversation"
-                        type="button"
-                      >
-                        <Trash2
-                          aria-hidden="true"
-                          className="size-4"
-                        />
-                      </button>
-                    </li>
-                  );
-                },
-              )}
-            </ul>
-          )}
-        </div>
+          return (
+            <NavLink
+              className={({ isActive }) =>
+                [
+                  "flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition md:flex-none",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ].join(" ")
+              }
+              end={item.end}
+              key={item.to}
+              to={item.to}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
+
+      <div className="mt-auto hidden p-4 md:block">
+        <div className="rounded-xl border border-border bg-background/70 p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            Tenant protected
+          </div>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Documents and evaluations are isolated to your authenticated organization.
+          </p>
+        </div>
+      </div>
     </aside>
   );
 }
