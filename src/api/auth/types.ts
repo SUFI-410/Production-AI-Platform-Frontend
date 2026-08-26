@@ -4,8 +4,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  organization_name: string;
-  email: string;
+  invitation_token: string;
   password: string;
 }
 
