@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+  ArrowLeft,
   ArrowRight,
   CircleCheck,
   FileCheck2,
@@ -10,8 +11,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import {
+  Link,
   Navigate,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom";
 
 import { Button } from "../../components/ui/button";
@@ -21,7 +24,8 @@ import {
 } from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/authStore";
 
-type AuthMode = "login" | "register";
+const PILOT_REQUEST_URL =
+  "https://www.linkedin.com/in/sufyan-naeem-19a338277/";
 
 function getErrorMessage(
   error: unknown,
@@ -49,6 +53,7 @@ const inputClassName = [
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const accessToken = useAuthStore(
     (state) => state.accessToken,
@@ -57,29 +62,28 @@ function AuthPage() {
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
-  const [mode, setMode] =
-    useState<AuthMode>("login");
-
-  const [
-    organizationName,
-    setOrganizationName,
-  ] = useState("");
+  const invitationToken =
+    searchParams.get("invite")?.trim() ?? "";
+  const isActivating = invitationToken.length > 0;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] =
     useState("");
 
   if (accessToken !== null) {
-    return <Navigate replace to="/" />;
+    return (
+      <Navigate
+        replace
+        to="/invoice-preflight"
+      />
+    );
   }
-
-  const isRegistering = mode === "register";
 
   const isSubmitting =
     loginMutation.isPending ||
     registerMutation.isPending;
 
-  const activeError = isRegistering
+  const activeError = isActivating
     ? registerMutation.error
     : loginMutation.error;
 
@@ -88,19 +92,13 @@ function AuthPage() {
       ? null
       : getErrorMessage(
           activeError,
-          isRegistering
-            ? "Unable to create your workspace."
+          isActivating
+            ? "Unable to activate your pilot workspace."
             : "Unable to sign in.",
         );
 
-  function switchMode(nextMode: AuthMode) {
-    setMode(nextMode);
-    loginMutation.reset();
-    registerMutation.reset();
-  }
-
   function handleSuccess() {
-    navigate("/", {
+    navigate("/invoice-preflight", {
       replace: true,
     });
   }
@@ -111,7 +109,10 @@ function AuthPage() {
 
       <div className="relative mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.05fr_0.95fr]">
         <section className="flex flex-col justify-between px-6 py-10 sm:px-10 lg:px-16 lg:py-14">
-          <div className="flex items-center gap-3">
+          <Link
+            className="flex w-fit items-center gap-3"
+            to="/"
+          >
             <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
               <FileCheck2
                 aria-hidden="true"
@@ -125,10 +126,10 @@ function AuthPage() {
               </p>
 
               <p className="text-xs text-muted-foreground">
-                Production AI Platform
+                Payment-readiness workspace
               </p>
             </div>
-          </div>
+          </Link>
 
           <div className="my-16 max-w-xl lg:my-10">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-blue-200">
@@ -136,7 +137,7 @@ function AuthPage() {
                 aria-hidden="true"
                 className="size-3.5"
               />
-              Payment-readiness control
+              Private pilot access
             </span>
 
             <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-[-0.035em] sm:text-5xl lg:text-6xl">
@@ -161,8 +162,8 @@ function AuthPage() {
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Every extracted billing fact must
-                  point to verified source text.
+                  Every billing fact points to the
+                  customer document that supports it.
                 </p>
               </div>
 
@@ -177,8 +178,8 @@ function AuthPage() {
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Python—not the language model—decides
-                  PASS, WARNING, or BLOCKER.
+                  Application rules decide PASS,
+                  WARNING, or BLOCKER.
                 </p>
               </div>
             </div>
@@ -193,72 +194,46 @@ function AuthPage() {
         <section className="flex items-center justify-center border-t border-border bg-card/35 px-6 py-12 backdrop-blur-sm lg:border-l lg:border-t-0 lg:px-12">
           <div className="w-full max-w-md">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-2xl shadow-black/20 sm:p-8">
-              <div className="flex rounded-lg bg-background p-1">
-                <button
-                  className={[
-                    "flex-1 rounded-md px-3 py-2",
-                    "text-sm font-medium transition",
-                    mode === "login"
-                      ? "bg-card text-foreground shadow"
-                      : "text-muted-foreground hover:text-foreground",
-                  ].join(" ")}
-                  onClick={() => {
-                    switchMode("login");
-                  }}
-                  type="button"
-                >
-                  Sign in
-                </button>
+              <Link
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+                to="/"
+              >
+                <ArrowLeft
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Product overview
+              </Link>
 
-                <button
-                  className={[
-                    "flex-1 rounded-md px-3 py-2",
-                    "text-sm font-medium transition",
-                    mode === "register"
-                      ? "bg-card text-foreground shadow"
-                      : "text-muted-foreground hover:text-foreground",
-                  ].join(" ")}
-                  onClick={() => {
-                    switchMode("register");
-                  }}
-                  type="button"
-                >
-                  Create workspace
-                </button>
+              <div className="mt-7 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-blue-400">
+                <LockKeyhole
+                  aria-hidden="true"
+                  className="size-5"
+                />
               </div>
 
-              <div className="mt-7">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-blue-400">
-                  <LockKeyhole
-                    aria-hidden="true"
-                    className="size-5"
-                  />
-                </div>
+              <h2 className="mt-4 text-2xl font-semibold tracking-tight">
+                {isActivating
+                  ? "Activate your pilot workspace"
+                  : "Welcome back"}
+              </h2>
 
-                <h2 className="mt-4 text-2xl font-semibold tracking-tight">
-                  {isRegistering
-                    ? "Create your workspace"
-                    : "Welcome back"}
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {isRegistering
-                    ? "Set up a secure organization workspace for invoice preflight."
-                    : "Sign in to review invoices and payment-readiness findings."}
-                </p>
-              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {isActivating
+                  ? "Your private invitation already identifies your approved organization and work email. Choose a password to activate access."
+                  : "Sign in to review invoices and payment-readiness findings."}
+              </p>
 
               <form
                 className="mt-7 space-y-5"
                 onSubmit={(event) => {
                   event.preventDefault();
 
-                  if (isRegistering) {
+                  if (isActivating) {
                     registerMutation.mutate(
                       {
-                        organization_name:
-                          organizationName,
-                        email,
+                        invitation_token:
+                          invitationToken,
                         password,
                       },
                       {
@@ -280,49 +255,26 @@ function AuthPage() {
                   );
                 }}
               >
-                {isRegistering ? (
+                {!isActivating ? (
                   <label className="block">
                     <span className="mb-2 block text-sm font-medium">
-                      Organization name
+                      Work email
                     </span>
 
                     <input
-                      autoComplete="organization"
+                      autoComplete="email"
                       className={inputClassName}
                       disabled={isSubmitting}
-                      maxLength={255}
-                      minLength={2}
                       onChange={(event) => {
-                        setOrganizationName(
-                          event.target.value,
-                        );
+                        setEmail(event.target.value);
                       }}
-                      placeholder="Acme Services"
+                      placeholder="you@company.com"
                       required
-                      type="text"
-                      value={organizationName}
+                      type="email"
+                      value={email}
                     />
                   </label>
                 ) : null}
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium">
-                    Work email
-                  </span>
-
-                  <input
-                    autoComplete="email"
-                    className={inputClassName}
-                    disabled={isSubmitting}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                    }}
-                    placeholder="you@company.com"
-                    required
-                    type="email"
-                    value={email}
-                  />
-                </label>
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium">
@@ -331,7 +283,7 @@ function AuthPage() {
 
                   <input
                     autoComplete={
-                      isRegistering
+                      isActivating
                         ? "new-password"
                         : "current-password"
                     }
@@ -339,13 +291,13 @@ function AuthPage() {
                     disabled={isSubmitting}
                     maxLength={128}
                     minLength={
-                      isRegistering ? 12 : 1
+                      isActivating ? 12 : 1
                     }
                     onChange={(event) => {
                       setPassword(event.target.value);
                     }}
                     placeholder={
-                      isRegistering
+                      isActivating
                         ? "At least 12 characters"
                         : "Enter your password"
                     }
@@ -379,8 +331,8 @@ function AuthPage() {
                     </>
                   ) : (
                     <>
-                      {isRegistering
-                        ? "Create workspace"
+                      {isActivating
+                        ? "Activate workspace"
                         : "Sign in"}
                       <ArrowRight
                         aria-hidden="true"
@@ -391,8 +343,32 @@ function AuthPage() {
                 </Button>
               </form>
 
-              <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">
-                Your documents remain isolated to your
+              {isActivating ? (
+                <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">
+                  Already activated?{" "}
+                  <Link
+                    className="font-medium text-blue-300 hover:text-blue-200"
+                    to="/auth"
+                  >
+                    Sign in instead
+                  </Link>
+                </p>
+              ) : (
+                <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">
+                  Need access?{" "}
+                  <a
+                    className="font-medium text-blue-300 hover:text-blue-200"
+                    href={PILOT_REQUEST_URL}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Request a private pilot
+                  </a>
+                </p>
+              )}
+
+              <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
+                Documents remain isolated to the
                 authenticated organization.
               </p>
             </div>

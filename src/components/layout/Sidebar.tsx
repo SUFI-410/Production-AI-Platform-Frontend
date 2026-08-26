@@ -1,4 +1,4 @@
-﻿import {
+import {
   FileCheck2,
   MessageSquareText,
   ShieldCheck,
@@ -10,7 +10,7 @@ const navigationItems = [
     end: true,
     icon: FileCheck2,
     label: "Invoice Preflight",
-    to: "/",
+    to: "/invoice-preflight",
   },
   {
     end: false,
