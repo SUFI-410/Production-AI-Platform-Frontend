@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import {
   type ChangeEvent,
@@ -27,7 +28,9 @@ import type {
   TenantDocument,
 } from "../../api";
 import {
+  useDeleteDocument,
   useEvaluateInvoicePreflight,
+  useTenantDocuments,
   useUploadDocument,
 } from "../../hooks/usePreflight";
 import { useAuthStore } from "../../store/authStore";
@@ -45,6 +48,17 @@ const BILLING_DOCUMENT_TYPES: Array<{
     value: "billing_instructions",
   },
 ];
+
+const BILLING_DOCUMENT_TYPE_VALUES = new Set<BusinessDocumentType>(
+  BILLING_DOCUMENT_TYPES.map((documentType) => documentType.value),
+);
+
+function canUseForPreflight(document: TenantDocument): boolean {
+  return (
+    document.document_type === "invoice" ||
+    BILLING_DOCUMENT_TYPE_VALUES.has(document.document_type)
+  );
+}
 
 const READINESS_STYLES: Record<
   PaymentReadiness,
@@ -153,12 +167,13 @@ function SelectedDocument({ document, onRemove }: SelectedFileProps) {
       </div>
 
       <button
-        aria-label={`Remove ${document.original_filename}`}
-        className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-600"
+        aria-label={`Remove ${document.original_filename} from this check`}
+        className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
         onClick={onRemove}
+        title="Remove from this check"
         type="button"
       >
-        <Trash2 className="h-4 w-4" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );
@@ -339,13 +354,44 @@ function PreflightPage() {
     useState<BusinessDocumentType>("contract");
   const [error, setError] = useState<string | null>(null);
   const uploadMutation = useUploadDocument();
+  const deleteMutation = useDeleteDocument();
   const evaluateMutation = useEvaluateInvoicePreflight();
+  const documentsQuery = useTenantDocuments(user?.organization_id ?? null);
 
   useEffect(() => {
     if (user) {
       initializeOrganization(user.organization_id);
     }
   }, [initializeOrganization, user]);
+
+  useEffect(() => {
+    if (!documentsQuery.data) {
+      return;
+    }
+
+    const storedDocumentIds = new Set(
+      documentsQuery.data.map((document) => document.id),
+    );
+
+    for (const document of billingDocuments) {
+      if (!storedDocumentIds.has(document.id)) {
+        removeBillingDocument(document.id);
+      }
+    }
+
+    if (
+      invoiceDocument &&
+      !storedDocumentIds.has(invoiceDocument.id)
+    ) {
+      setInvoiceDocument(null);
+    }
+  }, [
+    billingDocuments,
+    documentsQuery.data,
+    invoiceDocument,
+    removeBillingDocument,
+    setInvoiceDocument,
+  ]);
 
   const uploadBillingDocument = async (file: File) => {
     setError(null);
@@ -375,6 +421,42 @@ function PreflightPage() {
     }
   };
 
+  const selectStoredDocument = (document: TenantDocument) => {
+    setError(null);
+
+    if (document.document_type === "invoice") {
+      setInvoiceDocument(document);
+      return;
+    }
+
+    if (BILLING_DOCUMENT_TYPE_VALUES.has(document.document_type)) {
+      addBillingDocument(document);
+    }
+  };
+
+  const deleteStoredDocument = async (document: TenantDocument) => {
+    const confirmed = window.confirm(
+      `Permanently delete ${document.original_filename}? This cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await deleteMutation.mutateAsync(document.id);
+      removeBillingDocument(document.id);
+
+      if (invoiceDocument?.id === document.id) {
+        setInvoiceDocument(null);
+      }
+    } catch (deletionError) {
+      setError(getErrorMessage(deletionError));
+    }
+  };
+
   const evaluate = async () => {
     if (!invoiceDocument || billingDocuments.length === 0) {
       return;
@@ -399,6 +481,8 @@ function PreflightPage() {
     billingDocuments.length > 0 &&
     invoiceDocument !== null &&
     !uploadMutation.isPending &&
+    !deleteMutation.isPending &&
+    !documentsQuery.isPending &&
     !evaluateMutation.isPending;
 
   return (
@@ -526,6 +610,97 @@ function PreflightPage() {
             )}
           </section>
         </div>
+
+        <section className="mt-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div>
+            <h2 className="font-semibold text-foreground">Stored documents</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Select documents for the current check or permanently delete files your organization no longer needs.
+            </p>
+          </div>
+
+          {documentsQuery.isPending && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              Loading stored documents...
+            </div>
+          )}
+
+          {documentsQuery.isError && (
+            <div className="mt-4 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{getErrorMessage(documentsQuery.error)}</p>
+            </div>
+          )}
+
+          {documentsQuery.data?.length === 0 && (
+            <p className="mt-4 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+              No stored documents yet.
+            </p>
+          )}
+
+          {documentsQuery.data && documentsQuery.data.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {documentsQuery.data.map((document) => {
+                const isSelected =
+                  invoiceDocument?.id === document.id ||
+                  billingDocuments.some((item) => item.id === document.id);
+                const isDeleting =
+                  deleteMutation.isPending &&
+                  deleteMutation.variables === document.id;
+
+                return (
+                  <div
+                    className="flex flex-col gap-3 rounded-xl border border-border bg-background/70 p-3 sm:flex-row sm:items-center"
+                    key={document.id}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {document.original_filename}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatField(document.document_type)} | {formatBytes(document.size_bytes)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {canUseForPreflight(document) && (
+                        <button
+                          className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isSelected || deleteMutation.isPending}
+                          onClick={() => selectStoredDocument(document)}
+                          type="button"
+                        >
+                          {isSelected ? "Selected" : "Use in check"}
+                        </button>
+                      )}
+
+                      <button
+                        aria-label={`Permanently delete ${document.original_filename}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => void deleteStoredDocument(document)}
+                        type="button"
+                      >
+                        {isDeleting ? (
+                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {error && (
           <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">

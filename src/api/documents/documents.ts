@@ -1,4 +1,4 @@
-﻿import apiClient from "../client";
+import apiClient from "../client";
 
 import type {
   BusinessDocumentType,
@@ -17,34 +17,34 @@ type DocumentUploadResponse = Omit<
   document_type?: BusinessDocumentType;
 };
 
+export async function listDocuments(): Promise<TenantDocument[]> {
+  const response = await apiClient.get<TenantDocument[]>("/documents");
+
+  return response.data;
+}
+
 export async function uploadDocument(
   request: UploadDocumentRequest,
 ): Promise<TenantDocument> {
   const formData = new FormData();
 
-  formData.append(
-    "file",
-    request.file,
-  );
+  formData.append("file", request.file);
+  formData.append("document_type", request.documentType);
 
-  formData.append(
-    "document_type",
-    request.documentType,
+  const response = await apiClient.post<DocumentUploadResponse>(
+    "/documents",
+    formData,
+    {
+      timeout: 120000,
+    },
   );
-
-  const response =
-    await apiClient.post<DocumentUploadResponse>(
-      "/documents",
-      formData,
-      {
-        timeout: 120000,
-      },
-    );
 
   return {
     ...response.data,
-    document_type:
-      response.data.document_type ??
-      request.documentType,
+    document_type: response.data.document_type ?? request.documentType,
   };
+}
+
+export async function deleteDocument(documentId: string): Promise<void> {
+  await apiClient.delete(`/documents/${encodeURIComponent(documentId)}`);
 }
