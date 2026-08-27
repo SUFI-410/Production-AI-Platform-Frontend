@@ -150,7 +150,8 @@ html {
 }
 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   font-family: var(--font-family);
   line-height: 1.5;
