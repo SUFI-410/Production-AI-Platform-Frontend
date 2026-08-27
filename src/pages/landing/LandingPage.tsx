@@ -98,8 +98,8 @@ function LandingPage() {
             </div>
 
             <p className="mt-4 text-xs text-muted-foreground">
-              Guided onboarding Â· Organization-isolated
-              documents Â· No public self-registration
+              Guided onboarding &middot; Organization-isolated
+              documents &middot; No public self-registration
             </p>
           </div>
 
