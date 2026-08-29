@@ -142,12 +142,12 @@ function MessageSources({
   }
 
   return (
-    <div className="mt-4 border-t border-border pt-3">
+    <div className="mt-4 min-w-0 max-w-full border-t border-border pt-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Sources
       </p>
 
-      <ol className="space-y-2">
+      <ol className="min-w-0 space-y-2">
         {sources.map((source, index) => {
           const sourceName = formatSourceName(
             source.document,
@@ -160,7 +160,7 @@ function MessageSources({
           return (
             <li
               key={`${source.document}-${index}`}
-              className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2"
+              className="flex min-w-0 max-w-full items-start gap-2 overflow-hidden rounded-md border border-border bg-muted/40 px-3 py-2"
             >
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
                 {index + 1}
@@ -224,7 +224,7 @@ function MessageList() {
     return (
       <section
         aria-label="Chat messages"
-        className="flex flex-1 items-center justify-center px-4 py-12"
+        className="flex min-w-0 flex-1 items-center justify-center px-4 py-12"
       >
         <div className="max-w-lg text-center">
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
@@ -252,10 +252,10 @@ function MessageList() {
       aria-label="Chat messages"
       aria-live="polite"
       aria-relevant="additions text"
-      className="flex-1 overflow-y-auto"
+      className="min-w-0 flex-1 overflow-y-auto"
       role="log"
     >
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
+      <div className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-6 px-4 py-6">
         {messages.map((message) => {
           const isUserMessage =
             message.role === "user";
@@ -284,8 +284,8 @@ function MessageList() {
               }
               className={
                 isUserMessage
-                  ? "flex justify-end gap-3"
-                  : "flex justify-start gap-3"
+                  ? "flex w-full min-w-0 justify-end gap-3"
+                  : "flex w-full min-w-0 justify-start gap-3"
               }
             >
               {!isUserMessage && (
@@ -300,11 +300,11 @@ function MessageList() {
               <div
                 className={
                   isUserMessage
-                    ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-primary-foreground"
-                    : "max-w-[85%] rounded-2xl rounded-bl-sm border border-border bg-background px-4 py-3 text-foreground"
+                    ? "min-w-0 max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-primary-foreground"
+                    : "min-w-0 max-w-[85%] rounded-2xl rounded-bl-sm border border-border bg-background px-4 py-3 text-foreground"
                 }
               >
-                <div className="whitespace-pre-wrap wrap-break-word text-sm leading-6">
+                <div className="whitespace-pre-wrap wrap-anywhere text-sm leading-6">
                   {message.content ||
                     (message.status === "pending"
                       ? "Preparing a response..."
@@ -314,7 +314,7 @@ function MessageList() {
                 {!isUserMessage &&
                   (showGroundedness ||
                     showSources) && (
-                    <div className="mt-4">
+                    <div className="mt-4 min-w-0">
                       {showGroundedness && (
                         <GroundednessBadge
                           grounded={
