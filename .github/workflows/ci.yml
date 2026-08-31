@@ -48,3 +48,9 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Install browser for recovery tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Test password recovery screens
+        run: npm run test:password-reset
