@@ -343,6 +343,15 @@ function AuthPage() {
                 </Button>
               </form>
 
+              {!isActivating && (
+                <Link
+                  className="mt-4 block text-center text-sm text-blue-300 hover:underline"
+                  to="/forgot-password"
+                >
+                  Forgot password?
+                </Link>
+              )}
+
               {isActivating ? (
                 <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">
                   Already activated?{" "}

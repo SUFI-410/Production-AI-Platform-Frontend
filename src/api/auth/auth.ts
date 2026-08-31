@@ -1,5 +1,20 @@
 import apiClient from "../client";
 
+export async function requestPasswordReset(email: string, turnstileToken: string) {
+  const response = await apiClient.post<{ message: string }>(
+    "/auth/password-reset/request",
+    { email, turnstile_token: turnstileToken },
+  );
+  return response.data;
+}
+
+export async function confirmPasswordReset(token: string, password: string) {
+  const response = await apiClient.post<{ message: string }>(
+    "/auth/password-reset/confirm", { token, password },
+  );
+  return response.data;
+}
+
 import type {
   CurrentUser,
   LoginRequest,
