@@ -2,10 +2,12 @@
 import {
   FileCheck2,
   LogOut,
+  KeyRound,
 } from "lucide-react";
 import {
   useLocation,
   useNavigate,
+  Link,
 } from "react-router-dom";
 
 import { useHealth } from "../../hooks/useHealth";
@@ -92,6 +94,16 @@ function Header() {
             {user?.email ?? "Authenticated user"}
           </span>
         </div>
+
+        <Link
+          to="/forgot-password"
+          aria-label="Reset password"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+          title="Recover your account password by email"
+        >
+          <KeyRound className="h-4 w-4" />
+          <span className="hidden sm:inline">Reset password</span>
+        </Link>
 
         <button
           aria-label="Log out"
