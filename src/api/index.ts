@@ -1,6 +1,9 @@
 export * from "./auth/auth";
 export * from "./auth/types";
 
+export * from "./billing/billing";
+export * from "./billing/types";
+
 export * from "./chat/chat";
 export * from "./chat/types";
 
