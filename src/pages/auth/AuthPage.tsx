@@ -27,6 +27,32 @@ import { useAuthStore } from "../../store/authStore";
 const PILOT_REQUEST_URL =
   "https://www.linkedin.com/in/sufyan-naeem-19a338277/";
 
+const CHECKOUT_PLAN_CODES = [
+  "starter",
+  "professional",
+  "business",
+] as const;
+
+const CHECKOUT_INTERVALS = [
+  "monthly",
+  "annual",
+] as const;
+
+type CheckoutPlanCode =
+  (typeof CHECKOUT_PLAN_CODES)[number];
+
+type CheckoutInterval =
+  (typeof CHECKOUT_INTERVALS)[number];
+
+const inputClassName = [
+  "h-11 w-full rounded-lg border border-input",
+  "bg-background/70 px-3 text-sm text-foreground",
+  "outline-none transition",
+  "placeholder:text-muted-foreground",
+  "focus:border-primary focus:ring-2",
+  "focus:ring-primary/20",
+].join(" ");
+
 function getErrorMessage(
   error: unknown,
   fallback: string,
@@ -42,14 +68,21 @@ function getErrorMessage(
   return fallback;
 }
 
-const inputClassName = [
-  "h-11 w-full rounded-lg border border-input",
-  "bg-background/70 px-3 text-sm text-foreground",
-  "outline-none transition",
-  "placeholder:text-muted-foreground",
-  "focus:border-primary focus:ring-2",
-  "focus:ring-primary/20",
-].join(" ");
+function isCheckoutPlanCode(
+  value: string,
+): value is CheckoutPlanCode {
+  return CHECKOUT_PLAN_CODES.includes(
+    value as CheckoutPlanCode,
+  );
+}
+
+function isCheckoutInterval(
+  value: string,
+): value is CheckoutInterval {
+  return CHECKOUT_INTERVALS.includes(
+    value as CheckoutInterval,
+  );
+}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -64,7 +97,20 @@ function AuthPage() {
 
   const invitationToken =
     searchParams.get("invite")?.trim() ?? "";
-  const isActivating = invitationToken.length > 0;
+
+  const isActivating =
+    invitationToken.length > 0;
+
+  const checkoutPlan =
+    searchParams.get("plan")?.trim() ?? "";
+
+  const checkoutInterval =
+    searchParams.get("interval")?.trim() ?? "";
+
+  const hasValidCheckoutSelection =
+    !isActivating &&
+    isCheckoutPlanCode(checkoutPlan) &&
+    isCheckoutInterval(checkoutInterval);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] =
@@ -74,7 +120,11 @@ function AuthPage() {
     return (
       <Navigate
         replace
-        to="/invoice-preflight"
+        to={
+          hasValidCheckoutSelection
+            ? `/checkout?plan=${checkoutPlan}&interval=${checkoutInterval}`
+            : "/invoice-preflight"
+        }
       />
     );
   }
@@ -98,6 +148,17 @@ function AuthPage() {
         );
 
   function handleSuccess() {
+    if (hasValidCheckoutSelection) {
+      navigate(
+        `/checkout?plan=${checkoutPlan}&interval=${checkoutInterval}`,
+        {
+          replace: true,
+        },
+      );
+
+      return;
+    }
+
     navigate("/invoice-preflight", {
       replace: true,
     });
@@ -224,6 +285,13 @@ function AuthPage() {
                   : "Sign in to review invoices and payment-readiness findings."}
               </p>
 
+              {hasValidCheckoutSelection ? (
+                <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-muted-foreground">
+                  After signing in, you'll continue to
+                  secure checkout for the selected plan.
+                </div>
+              ) : null}
+
               <form
                 className="mt-7 space-y-5"
                 onSubmit={(event) => {
@@ -333,7 +401,9 @@ function AuthPage() {
                     <>
                       {isActivating
                         ? "Activate workspace"
-                        : "Sign in"}
+                        : hasValidCheckoutSelection
+                          ? "Continue to checkout"
+                          : "Sign in"}
                       <ArrowRight
                         aria-hidden="true"
                         className="size-4"
