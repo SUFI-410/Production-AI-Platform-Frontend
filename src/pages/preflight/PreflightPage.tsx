@@ -36,6 +36,8 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { usePreflightStore } from "../../store/preflightStore";
 
+import BillingStatusPanel from "./BillingStatusPanel";
+
 const BILLING_DOCUMENT_TYPES: Array<{
   label: string;
   value: BusinessDocumentType;
@@ -519,6 +521,8 @@ function PreflightPage() {
             Start over
           </button>
         </div>
+
+        <BillingStatusPanel organizationId={user?.organization_id ?? null} />
 
         <div className="mt-7 grid gap-5 lg:grid-cols-2">
           <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
